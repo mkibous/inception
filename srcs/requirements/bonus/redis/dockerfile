@@ -1,0 +1,12 @@
+FROM debian:bullseye
+
+# Install Redis and clean up
+RUN apt-get update && \
+    apt-get install -y redis-server && \
+    apt-get clean
+
+# Expose Redis default port
+EXPOSE 6379
+
+# Run Redis server
+CMD ["redis-server", "--protected-mode", "no"]

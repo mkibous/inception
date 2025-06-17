@@ -1,0 +1,22 @@
+FROM debian:bullseye
+
+# Install vsftpd and necessary tools
+RUN apt-get update && \
+    apt-get install -y vsftpd bash  && \
+    apt-get clean
+
+# Create secure chroot dir for vsftpd
+RUN mkdir -p /var/run/vsftpd/empty && \
+    chmod 755 /var/run/vsftpd/empty && \
+    chown root:root /var/run/vsftpd/empty
+
+# Copy vsftpd config and entrypoint
+COPY ./tools/vsftpd.conf /etc/vsftpd.conf
+COPY ./tools/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Expose FTP ports
+EXPOSE 21 21000-21010
+
+# Start container
+CMD ["/entrypoint.sh"]

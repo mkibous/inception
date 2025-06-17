@@ -1,0 +1,17 @@
+FROM debian:bullseye
+
+# Install dependencies including netcat
+RUN apt-get update && apt-get install -y \
+    nodejs \
+    npm \
+    curl && \
+    apt-get clean
+
+# Install Redis Commander
+RUN npm install -g redis-commander
+
+COPY ./tools/startup.sh /startup.sh
+RUN chmod +x /startup.sh
+
+EXPOSE 8081
+CMD ["/startup.sh"]

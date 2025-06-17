@@ -1,0 +1,150 @@
+
+services:
+  nginx:
+    build:  ./requirements/nginx
+    image: nginx:1.0
+    container_name: nginx
+    ports:
+      - "443:443"
+    volumes:
+      - wordpress_data:/var/www/html  # This shares the WordPress files with NGINX
+    depends_on:
+      - wordpress
+    restart: always
+    networks:
+      - my_network
+
+  website:
+    build: ./requirements/bonus/website
+    image: website:1.0
+    container_name: website
+    ports:
+      - "9001:80" # Expose the website on port 8080
+    restart: always
+  mariadb:
+    build:  ./requirements/mariadb
+    image: mariadb:1.0
+    container_name: mariadb
+    secrets:
+      - DB_ROOT_PASSWORD
+      - DB_NAME
+      - DB_USER
+      - DB_PASSWORD
+    volumes:
+      - mariadb_data:/var/lib/mysql         # Persistent data storage
+    restart: always
+    networks:
+      - my_network
+  adminer:
+    build:  ./requirements/bonus/adminer
+    image: adminer:1.0
+    container_name: adminer
+    restart: always
+    ports:
+      - "8080:8080" # Adminer web interface port
+    depends_on:
+      - mariadb
+    networks:
+      - my_network
+  redis:
+    build:  ./requirements/bonus/redis
+    image: redis:1.0
+    container_name: redis
+    restart: always
+    depends_on:
+      - mariadb
+    networks:
+      - my_network
+    
+  wordpress:
+    build:  ./requirements/wordpress
+    image: wordpress:1.0
+    container_name: wordpress
+    restart: always
+    secrets:
+      - DB_NAME
+      - DB_USER
+      - DB_PASSWORD
+      - DB_HOST
+      - ADMIN_PASSWORD
+      - ADMIN_USER
+      - ADMIN_EMAIL
+      - WORDPRESS_USER_NAME
+      - WORDPRESS_USER_PASSWORD
+      - WORDPRESS_USER_EMAIL
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
+    volumes:
+      - wordpress_data:/var/www/html
+    depends_on:
+      - mariadb
+    networks:
+      - my_network
+  ftp:
+    build: ./requirements/bonus/ftp
+    image: ftp:1.0
+    container_name: ftp
+    restart: always
+    secrets:
+      - ADMIN_PASSWORD
+    ports:
+      - "21:21" # FTP port
+      - "21000-21010:21000-21010"
+    volumes:
+      - wordpress_data:/home/${FTPUSER}
+    environment:
+      - FTPUSER=${FTPUSER}
+
+    depends_on:
+      - wordpress
+
+  redis-commander:
+    build:  ./requirements/bonus/redis-commander
+    image: redis-commander:1.0
+    container_name: redis-commander
+    restart: always
+    ports:
+      - "8081:8081" 
+    depends_on:
+      - redis
+    networks:
+      - my_network
+
+volumes:
+  wordpress_data:
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${USERNAME}/data/wordpress
+  mariadb_data:
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${USERNAME}/data/mariadb
+  
+
+networks:
+  my_network:
+secrets:
+  DB_ROOT_PASSWORD:
+    file: ../secrets/DB_ROOT_PASSWORD
+  DB_NAME:
+    file: ../secrets/DB_NAME
+  DB_USER:
+    file: ../secrets/DB_USER
+  DB_PASSWORD:
+    file: ../secrets/DB_PASSWORD
+  DB_HOST:
+    file: ../secrets/DB_HOST
+  ADMIN_PASSWORD:
+    file: ../secrets/ADMIN_PASSWORD
+  ADMIN_EMAIL:
+    file: ../secrets/ADMIN_EMAIL
+  ADMIN_USER:
+    file: ../secrets/ADMIN_USER
+  WORDPRESS_USER_NAME:
+    file: ../secrets/WORDPRESS_USER_NAME
+  WORDPRESS_USER_PASSWORD:
+    file: ../secrets/WORDPRESS_USER_PASSWORD
+  WORDPRESS_USER_EMAIL:
+    file: ../secrets/WORDPRESS_USER_EMAIL

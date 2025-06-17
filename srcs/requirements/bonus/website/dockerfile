@@ -1,0 +1,12 @@
+FROM debian:bullseye
+
+# Install nginx and clean up
+RUN apt-get update && \
+    apt-get install -y nginx && \
+    apt-get clean
+
+EXPOSE 80
+
+COPY ./tools/ /var/www/html/
+# Start NGINX in foreground (important for Docker)
+CMD ["nginx", "-g", "daemon off;"]

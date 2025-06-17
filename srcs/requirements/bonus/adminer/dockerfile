@@ -1,0 +1,18 @@
+FROM debian:bullseye
+
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y php php-mbstring php-mysql wget && \
+    apt-get clean
+
+# Create directory for Adminer
+RUN mkdir -p /var/www/html
+
+# Download Adminer
+RUN wget "https://github.com/vrana/adminer/releases/download/v4.8.1/adminer-4.8.1.php" -O /var/www/html/index.php
+
+# Expose port 8080
+EXPOSE 8080
+
+# Start PHP built-in server
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "/var/www/html"]
